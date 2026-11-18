@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#0d1117">
+    <meta name="description" content="SUPERMAGENTA is coming soon. A little world in magenta, waiting to be explored.">
+    <title>SUPERMAGENTA is coming soon</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="./styles.css">
+    <script type="module" src="./game.js"></script>
+  </head>
+  <body>
+    <main>
+      <header>
+        <span class="brand-mark" aria-hidden="true"></span>
+        <h1><strong>SUPERMAGENTA</strong> <span>is coming soon</span></h1>
+      </header>
+      <section class="world" aria-label="Magenta marble maze">
+        <canvas id="maze" tabindex="0" aria-label="An isometric magenta marble maze" aria-describedby="instructions">
+          Your browser needs canvas support to play the marble maze.
+        </canvas>
+        <p id="instructions" class="sr-only">Move your mouse over the maze to guide the marble to the glowing ring. On a touchscreen, drag to guide it. You can also focus the maze and use the arrow keys. Press R or Escape to start again. The maze resets automatically after you reach the ring.</p>
+        <p id="status" class="sr-only" aria-live="polite"></p>
+        <noscript><p class="fallback">Enable JavaScript to explore the maze.</p></noscript>
+      </section>
+    </main>
+  </body>
+</html>
