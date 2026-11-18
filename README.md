@@ -6,10 +6,15 @@ A quiet, GitHub-dark-inspired coming-soon page with an original isometric marble
 maze. Static HTML, CSS and JavaScript; no runtime dependencies or external assets.
 Every maze surface is a magenta gradient.
 
-Move the mouse over the maze to guide the marble toward the glowing ring. Walls
-are solid, leaving the canvas slows the marble, and reaching the ring starts a
-short celebration before resetting. Touch dragging and focused arrow-key input
-are also supported. R or Escape resets the maze. No controls are displayed.
+Move the mouse toward an edge or corner to lift that part of the maze. The board
+visibly tilts, and gravity rolls the marble downhill, away from the raised side.
+Distance from the center controls the slope; the cursor never pulls the marble.
+Move back to the center to level the board, or counter-tilt to brake its momentum.
+Walls are solid and slightly bouncy. Leaving the canvas gently levels the board;
+the marble keeps coasting and gradually slows. Reaching the glowing ring starts
+a short celebration before resetting. Touch dragging and focused arrow keys
+also lift the corresponding side. R or Escape resets the maze and levels the
+board. No controls are displayed.
 Screen-reader instructions and completion announcements are included; reduced
 motion disables the decorative pulse and celebration particles.
 
@@ -17,7 +22,7 @@ motion disables the decorative pulse and celebration particles.
 
 Run `npm start` (Python 3 required) and open `http://localhost:4173`.
 Run `npm test` with Node.js 22 or newer to check route traversal, wall collisions,
-speed limits, braking, completion and coordinate mapping.
+speed limits, tilt direction, inertia, leveling, completion and coordinate mapping.
 
 ## Publishing
 

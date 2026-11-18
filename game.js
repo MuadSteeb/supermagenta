@@ -1,19 +1,22 @@
-import { GRID, START, GOAL, RADIUS, VIEW, createBall, stepBall, project, unproject } from "./maze.js";
+import { GRID, START, GOAL, RADIUS, VIEW, LEVEL, createBall, stepBall, stepTilt, project as projectPoint, unproject } from "./maze.js";
 
 const canvas = document.querySelector("#maze");
 const status = document.querySelector("#status");
 const ctx = canvas.getContext("2d");
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 let ball = createBall();
-let target = null;
+let pointer = null;
+const tilt = { ...LEVEL };
 let wonAt = null;
 let previousTime = null;
 let frame = null;
 let scale = 1;
 const keys = new Set();
 const wallHeight = 0.42;
-const board = document.createElement("canvas");
-const boardContext = board.getContext("2d");
+
+function project(x, y, z = 0) {
+  return projectPoint(x, y, z, tilt);
+}
 
 function polygon(context, points, colors) {
   const gradient = context.createLinearGradient(points[0].x, points[0].y, points[2].x, points[2].y + 22);
@@ -86,18 +89,14 @@ function resize() {
   scale = Math.min(window.devicePixelRatio || 1, 2) * bounds.width / VIEW.width;
   canvas.width = Math.round(VIEW.width * scale);
   canvas.height = Math.round(VIEW.height * scale);
-  board.width = canvas.width;
-  board.height = canvas.height;
-  boardContext.setTransform(scale, 0, 0, scale, 0, 0);
-  drawFloor(boardContext);
 }
 
 function ring(position, time, goal = false) {
   const p = project(position.x, position.y, goal ? 0.55 : 0.015);
   const pulse = reducedMotion.matches ? 0 : Math.sin(time * 2.6) * 0.9;
   ctx.save();
-  ctx.translate(p.x, p.y);
-  ctx.scale(1, VIEW.sy / VIEW.sx);
+  ctx.transform(1, -(tilt.x - tilt.y) * 24 / VIEW.sx, 0,
+    (VIEW.sy - (tilt.x + tilt.y) * 24) / VIEW.sx, p.x, p.y);
   ctx.shadowColor = goal ? "#ffb6ec" : "#ff72d3";
   ctx.shadowBlur = goal ? 15 : 0;
   ctx.strokeStyle = goal ? "#ffc2ef" : "#e857b5";
@@ -159,7 +158,8 @@ function celebrate(time) {
 
 function reset() {
   ball = createBall();
-  target = null;
+  pointer = null;
+  Object.assign(tilt, LEVEL);
   keys.clear();
   wonAt = null;
   status.textContent = "The marble is back at the start.";
@@ -169,23 +169,26 @@ function render(timestamp) {
   const time = timestamp / 1000;
   const dt = previousTime === null ? 0 : Math.min(time - previousTime, 0.05);
   previousTime = time;
-  let destination = target;
+  let destination = pointer;
   if (keys.size) {
     const dx = Number(keys.has("ArrowRight")) - Number(keys.has("ArrowLeft"));
     const dy = Number(keys.has("ArrowDown")) - Number(keys.has("ArrowUp"));
-    destination = { x: ball.x + dx + dy, y: ball.y - dx + dy };
+    const center = GRID.length / 2;
+    destination = { x: center + (dx + dy) * center, y: center + (-dx + dy) * center };
   }
-  stepBall(ball, destination, dt);
+  stepTilt(tilt, ball.won ? null : destination, dt);
+  stepBall(ball, tilt, dt);
   if (ball.won && wonAt === null) {
     wonAt = time;
-    target = null;
+    pointer = null;
+    keys.clear();
     status.textContent = "Maze complete. A new journey begins in a moment.";
   }
   if (wonAt !== null && time - wonAt > 2.4) reset();
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.drawImage(board, 0, 0);
   ctx.setTransform(scale, 0, 0, scale, 0, 0);
+  drawFloor(ctx);
   ring(START, time);
   // Painter's order lets nearby walls occlude the marble naturally.
   const objects = [];
@@ -209,7 +212,8 @@ function render(timestamp) {
 function point(event) {
   if (event.pointerType === "touch" && event.type === "pointermove" && !canvas.hasPointerCapture(event.pointerId)) return;
   const bounds = canvas.getBoundingClientRect();
-  target = unproject((event.clientX - bounds.left) * VIEW.width / bounds.width,
+  // Use the level board's coordinates so lifting it cannot move the input target.
+  pointer = unproject((event.clientX - bounds.left) * VIEW.width / bounds.width,
     (event.clientY - bounds.top) * VIEW.height / bounds.height);
 }
 
@@ -219,13 +223,13 @@ canvas.addEventListener("pointerdown", (event) => {
   canvas.focus({ preventScroll: true });
   point(event);
 });
-canvas.addEventListener("pointerleave", () => { target = null; });
+canvas.addEventListener("pointerleave", () => { pointer = null; });
 canvas.addEventListener("pointerup", (event) => {
   if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
-  if (event.pointerType !== "mouse") target = null;
+  if (event.pointerType !== "mouse") pointer = null;
 });
-canvas.addEventListener("pointercancel", () => { target = null; });
-canvas.addEventListener("lostpointercapture", () => { target = null; });
+canvas.addEventListener("pointercancel", () => { pointer = null; });
+canvas.addEventListener("lostpointercapture", () => { pointer = null; });
 canvas.addEventListener("keydown", (event) => {
   if (event.key.startsWith("Arrow")) {
     event.preventDefault();
@@ -233,11 +237,11 @@ canvas.addEventListener("keydown", (event) => {
   } else if (event.key.toLowerCase() === "r" || event.key === "Escape") reset();
 });
 canvas.addEventListener("keyup", (event) => { keys.delete(event.key); });
-canvas.addEventListener("blur", () => { keys.clear(); target = null; });
-window.addEventListener("blur", () => { keys.clear(); target = null; });
+canvas.addEventListener("blur", () => { keys.clear(); pointer = null; });
+window.addEventListener("blur", () => { keys.clear(); pointer = null; });
 document.addEventListener("visibilitychange", () => {
   keys.clear();
-  target = null;
+  pointer = null;
   previousTime = null;
   if (document.hidden) cancelAnimationFrame(frame);
   else frame = requestAnimationFrame(render);
