@@ -5,6 +5,8 @@
 A quiet, GitHub-dark-inspired coming-soon page with an original isometric marble
 maze. Static HTML, CSS and JavaScript; no runtime dependencies or external assets.
 Every maze surface is a magenta gradient.
+The compact layout has a winding route and misleading dead ends, adding challenge
+without narrower corridors or faster physics.
 
 Move the mouse toward an edge or corner to lift that part of the maze. The board
 visibly tilts, and gravity rolls the marble downhill, away from the raised side.
@@ -22,7 +24,8 @@ motion disables the decorative pulse and celebration particles.
 
 Run `npm start` (Python 3 required) and open `http://localhost:4173`.
 Run `npm test` with Node.js 22 or newer to check route traversal, wall collisions,
-speed limits, tilt direction, inertia, leveling, completion and coordinate mapping.
+layout difficulty, speed limits, tilt direction, inertia, leveling, completion
+and coordinate mapping.
 
 ## Publishing
 

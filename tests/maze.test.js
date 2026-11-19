@@ -43,6 +43,29 @@ test("maze can be completed using bounded board tilt and counter-steering", () =
   assert.equal(ball.won, true);
 });
 
+test("compact maze requires extra turns and offers misleading dead ends", () => {
+  assert.equal(GRID.length, 11);
+  assert.ok(GRID.every(row => row.length === 11));
+  const path = route();
+  assert.ok(path.length >= 33 && path.length <= 37, "route should be longer, not a marathon");
+  const directions = path.slice(1).map((point, index) =>
+    `${point.x - path[index].x},${point.y - path[index].y}`);
+  const turns = directions.slice(1).filter((direction, index) => direction !== directions[index]).length;
+  assert.ok(turns >= 9, "route must require repeated counter-steering");
+  let deadEnds = 0;
+  for (let y = 1; y < GRID.length - 1; y++) {
+    for (let x = 1; x < GRID[y].length - 1; x++) {
+      if (GRID[y][x] !== "0") continue;
+      if ((x + 0.5 === START.x && y + 0.5 === START.y) ||
+          (x + 0.5 === GOAL.x && y + 0.5 === GOAL.y)) continue;
+      const exits = [[1, 0], [-1, 0], [0, 1], [0, -1]]
+        .filter(([dx, dy]) => GRID[y + dy][x + dx] === "0").length;
+      if (exits === 1) deadEnds++;
+    }
+  }
+  assert.ok(deadEnds >= 3, "maze must retain tempting wrong branches");
+});
+
 test("walls, corners and board edges remain solid under sustained input", () => {
   for (const pointer of [{ x: 1.5, y: -100 }, { x: -100, y: 1.5 }, { x: -100, y: -100 }, { x: 100, y: 100 }]) {
     const ball = createBall();
